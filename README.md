@@ -1,7 +1,7 @@
 # App-Plug
 Mobile app for smart-plug managing
 
-# Schema
+# Architecture
 
 ```mermaid
 graph TD
@@ -79,9 +79,7 @@ graph TD
     E -- "Text action choosing" --> B
     C -- "Database request" --> D
     D -- "Database Answer" --> C
-    D -- "(If required)
-    Curl request" --> F
-    F -- "(If required)
-    Curl request" --> D
+    C -- "(If required) Curl request" --> F
+    F -- "(If required) Curl request" --> C
     C -- "Answer" --> A
 ```
