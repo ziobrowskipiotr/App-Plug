@@ -69,6 +69,8 @@ graph TD
         D@{ shape: lin-cyl, label: "Database" }
         E@{ shape: lin-cyl, label: "MCP Server" }
     end
+    classDef rpi fill:#003366,stroke:#66aaff,stroke-width:2px,color:white;
+    class C,D,E rpi;
     end
         F@{ shape: circle, label: "Smartplug" }
     end
@@ -82,4 +84,17 @@ graph TD
     C -- "(If required) Curl request" --> F
     F -- "(If required) Curl request" --> C
     C -- "Answer" --> A
+
+    linkStyle 0 stroke:#FF2C00,stroke-width:2px;
+    linkStyle 1 stroke:#FFE500,stroke-width:2px;
+    linkStyle 2 stroke:#FF8C00,stroke-width:2px;
+    linkStyle 3 stroke:#FFE500,stroke-width:2px;
+    linkStyle 4 stroke:#FF8C00,stroke-width:2px;
+    linkStyle 5 stroke:#FF8C00,stroke-width:2px;
+    linkStyle 6 stroke:#FF8C00,stroke-width:2px;
+    linkStyle 7 stroke:#FF8C00,stroke-width:2px;
+    linkStyle 8 stroke:#FF8C00,stroke-width:2px;
+
+
+
 ```
