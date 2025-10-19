@@ -1,0 +1,3 @@
+[submodule "Smart-Plug-Connection"]
+	path = Smart-Plug-Connection
+	url = https://github.com/ziobrowskipiotr/Smart-Plug-Connection
