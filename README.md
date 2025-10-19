@@ -96,7 +96,7 @@ graph TD
     linkStyle 8 stroke:#FF8C00,stroke-width:2px;
 ```
 
-# Database schema
+# Database Schema
 
 ```mermaid
 erDiagram
