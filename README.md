@@ -94,7 +94,31 @@ graph TD
     linkStyle 6 stroke:#FF8C00,stroke-width:2px;
     linkStyle 7 stroke:#FF8C00,stroke-width:2px;
     linkStyle 8 stroke:#FF8C00,stroke-width:2px;
-
-
-
 ```
+
+# Database Schema
+
+```mermaid
+erDiagram
+    devices {
+        INTEGER id PK
+        TEXT name "NOT NULL"
+        TEXT ipv4 "NOT NULL"
+        TEXT mac "NOT NULL"
+        DATETIME activation_time "DEFAULT CURRENT_TIMESTAMP"
+    }
+
+    measurements {
+        INTEGER id PK
+        INTEGER device_id FK "NOT NULL"
+        TEXT timestamp "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
+        REAL energy_total
+    }
+
+    devices ||--o{ measurements : "has"
+
+
+
+
+
+
