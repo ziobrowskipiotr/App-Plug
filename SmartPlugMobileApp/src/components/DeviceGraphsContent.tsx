@@ -1,19 +1,75 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
+import { devicesService } from "@/src/services/devices";
 
 type TimePeriod = "1 day" | "1 week" | "1 month";
 
 interface DeviceGraphsContentProps {
   deviceId: number;
+  deviceName?: string;
 }
+
+/**
+ * Format date to YYYY-MM-DD format
+ */
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Get date range for time period
+ */
+const getDateRange = (period: TimePeriod): { from: string; to: string } => {
+  const to = new Date();
+  const from = new Date();
+
+  if (period === "1 day") {
+    from.setDate(to.getDate() - 1);
+  } else if (period === "1 week") {
+    from.setDate(to.getDate() - 7);
+  } else if (period === "1 month") {
+    from.setMonth(to.getMonth() - 1);
+  }
+
+  return {
+    from: formatDate(from),
+    to: formatDate(to),
+  };
+};
 
 export const DeviceGraphsContent: React.FC<DeviceGraphsContentProps> = ({
   deviceId,
+  deviceName,
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("1 day");
+  const [loading, setLoading] = useState(false);
+
+  // Fetch real data from API when deviceName is available
+  useEffect(() => {
+    if (deviceName && selectedPeriod) {
+      // Optionally fetch real data here
+      // const fetchHistory = async () => {
+      //   try {
+      //     setLoading(true);
+      //     const { from, to } = getDateRange(selectedPeriod);
+      //     const history = await devicesService.getHistory(deviceName, from, to);
+      //     // Process history data for chart
+      //   } catch (error) {
+      //     console.error('Error fetching history:', error);
+      //   } finally {
+      //     setLoading(false);
+      //   }
+      // };
+      // fetchHistory();
+    }
+  }, [deviceName, selectedPeriod]);
 
   // Mock data generator based on time period
+  // Replace this with real API data when available
   const chartData = useMemo(() => {
     const periods: Record<TimePeriod, number> = {
       "1 day": 24, // 24 hours

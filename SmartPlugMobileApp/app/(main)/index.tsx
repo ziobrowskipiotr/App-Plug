@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -13,42 +13,22 @@ import { DeviceCard } from "@/src/components/DeviceCard";
 import { FloatingButton } from "@/src/components/FloatingButton";
 import { AiVoiceInputModal } from "@/src/components/AiVoiceInputModal";
 import { Button } from "@/src/components/Button";
-import { devicesService } from "@/src/services/devices";
 import { authService } from "@/src/services/auth";
+import { useDevices, useToggleDevice } from "@/src/hooks/useDevices";
 import type { Device } from "@/src/types/device";
 
 export default function DevicesScreen() {
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+  const { data: devices = [], isLoading, refetch, isRefetching } = useDevices();
+  const toggleDeviceMutation = useToggleDevice();
 
-  const loadDevices = useCallback(async () => {
-    try {
-      const data = await devicesService.getDevices();
-      setDevices(data);
-    } catch (error) {
-      console.error("Error loading devices:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadDevices();
-  }, [loadDevices]);
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadDevices();
-  }, [loadDevices]);
+  const handleRefresh = () => {
+    refetch();
+  };
 
   const handleToggle = async (deviceId: number) => {
     try {
-      await devicesService.toggleDevice(deviceId);
-      // Reload devices to reflect the change
-      await loadDevices();
+      await toggleDeviceMutation.mutateAsync(deviceId);
     } catch (error) {
       console.error("Error toggling device:", error);
     }
@@ -90,13 +70,13 @@ export default function DevicesScreen() {
         className="flex-1 px-4 pt-4"
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={handleRefresh}
             tintColor="#7C3AED"
           />
         }
       >
-        {loading ? (
+        {isLoading ? (
           <View className="items-center justify-center py-20">
             <Text className="text-gray-400">Loading devices...</Text>
           </View>

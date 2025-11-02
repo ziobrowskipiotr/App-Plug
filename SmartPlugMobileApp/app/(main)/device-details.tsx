@@ -1,55 +1,36 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { DeviceDetailsContent } from "@/src/components/DeviceDetailsContent";
 import { DeviceGraphsContent } from "@/src/components/DeviceGraphsContent";
-import { devicesService } from "@/src/services/devices";
-import type { DeviceStats } from "@/src/types/device";
+import {
+  useDevice,
+  useDeviceStats,
+  useToggleDevice,
+} from "@/src/hooks/useDevices";
 
 type TabType = "details" | "graphs";
 
 export default function DeviceDetailsScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const [activeTab, setActiveTab] = useState<TabType>("details");
-  const [stats, setStats] = useState<DeviceStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [deviceStatus, setDeviceStatus] = useState<"on" | "off">("off");
 
-  const loadDeviceStatus = useCallback(async () => {
-    try {
-      if (!id) return;
-      const device = await devicesService.getDevice(parseInt(id));
-      setDeviceStatus(device.status);
-    } catch (error) {
-      console.error("Error loading device:", error);
-    }
-  }, [id]);
+  const deviceId = id ? parseInt(id) : 0;
+  const { data: device } = useDevice(deviceId, !!id);
+  const { data: stats, isLoading: statsLoading } = useDeviceStats(
+    deviceId,
+    !!id
+  );
+  const toggleDeviceMutation = useToggleDevice();
 
-  const loadStats = useCallback(async () => {
-    try {
-      if (!id) return;
-      const deviceStats = await devicesService.getDeviceStats(parseInt(id));
-      setStats(deviceStats);
-    } catch (error) {
-      console.error("Error loading stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    loadStats();
-    loadDeviceStatus();
-  }, [loadStats, loadDeviceStatus]);
+  const deviceStatus = device?.status || "off";
 
   const handleToggle = async () => {
+    if (!id) return;
     try {
-      if (!id) return;
-      await devicesService.toggleDevice(parseInt(id));
-      await loadDeviceStatus();
-      await loadStats();
+      await toggleDeviceMutation.mutateAsync(deviceId);
     } catch (error) {
       console.error("Error toggling device:", error);
     }
@@ -118,9 +99,9 @@ export default function DeviceDetailsScreen() {
 
       {/* Tab Content */}
       {activeTab === "details" ? (
-        <DeviceDetailsContent stats={stats} loading={loading} />
+        <DeviceDetailsContent stats={stats || null} loading={statsLoading} />
       ) : (
-        <DeviceGraphsContent deviceId={id ? parseInt(id) : 0} />
+        <DeviceGraphsContent deviceId={deviceId} deviceName={name} />
       )}
     </View>
   );

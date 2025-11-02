@@ -2,7 +2,7 @@ export interface Device {
   id: number;
   name: string;
   ip: string;
-  status: 'on' | 'off';
+  status: "on" | "off";
 }
 
 export interface DeviceStats {
@@ -19,3 +19,45 @@ export interface DeviceFormData {
   ip: string;
 }
 
+// API Response Types
+export interface TodayConsumptionResponse {
+  plug_name: string;
+  consumption: string;
+  unit: string;
+}
+
+export interface YesterdayConsumptionResponse {
+  plug_name: string;
+  consumption: string;
+  unit: string;
+}
+
+export interface HistoryConsumptionResponse {
+  range: string;
+  consumption: string;
+  unit: string;
+}
+
+export interface VoltageResponse {
+  voltage: string;
+  unit: string;
+}
+
+export interface PowerResponse {
+  power: string;
+  unit: string;
+}
+
+export interface StateResponse {
+  state: string;
+}
+
+export interface CurrentResponse {
+  plug_name: string;
+  current: string;
+  unit: string;
+}
+
+export interface StatusResponse {
+  [key: string]: any; // Full status JSON object
+}

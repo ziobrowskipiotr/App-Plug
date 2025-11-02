@@ -12,13 +12,13 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/src/components/Button";
 import { Input } from "@/src/components/Input";
-import { devicesService } from "@/src/services/devices";
+import { useAddDevice } from "@/src/hooks/useDevices";
 
 export default function AddDeviceScreen() {
   const [deviceName, setDeviceName] = useState("");
   const [deviceIP, setDeviceIP] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const addDeviceMutation = useAddDevice();
 
   const handleAdd = async () => {
     if (!deviceName.trim() || !deviceIP.trim()) {
@@ -33,11 +33,10 @@ export default function AddDeviceScreen() {
       return;
     }
 
-    setLoading(true);
     setError("");
 
     try {
-      await devicesService.addDevice({
+      await addDeviceMutation.mutateAsync({
         name: deviceName,
         ip: deviceIP,
       });
@@ -45,8 +44,6 @@ export default function AddDeviceScreen() {
     } catch (err) {
       setError("Failed to add device. Please try again.");
       console.error("Add device error:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -102,8 +99,8 @@ export default function AddDeviceScreen() {
         <Button
           onPress={handleAdd}
           title="Add"
-          loading={loading}
-          disabled={loading}
+          loading={addDeviceMutation.isPending}
+          disabled={addDeviceMutation.isPending}
           className="mt-4"
         />
       </ScrollView>
