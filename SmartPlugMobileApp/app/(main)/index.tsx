@@ -11,6 +11,7 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { DeviceCard } from "@/src/components/DeviceCard";
 import { FloatingButton } from "@/src/components/FloatingButton";
+import { AiVoiceInputModal } from "@/src/components/AiVoiceInputModal";
 import { Button } from "@/src/components/Button";
 import { devicesService } from "@/src/services/devices";
 import { authService } from "@/src/services/auth";
@@ -20,6 +21,7 @@ export default function DevicesScreen() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const loadDevices = useCallback(async () => {
     try {
@@ -132,12 +134,12 @@ export default function DevicesScreen() {
       </ScrollView>
 
       {/* Floating AI Button */}
-      <FloatingButton
-        onPress={() => {
-          // Mock AI action
-          console.log("AI button pressed");
-        }}
-        label="Ai"
+      <FloatingButton onPress={() => setShowAiModal(true)} label="AI" />
+
+      {/* AI Voice Input Modal */}
+      <AiVoiceInputModal
+        visible={showAiModal}
+        onClose={() => setShowAiModal(false)}
       />
     </View>
   );
