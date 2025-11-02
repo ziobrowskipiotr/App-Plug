@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { MeasurementCard } from "@/src/components/MeasurementCard";
+import { DeviceDetailsContent } from "@/src/components/DeviceDetailsContent";
+import { DeviceGraphsContent } from "@/src/components/DeviceGraphsContent";
 import { devicesService } from "@/src/services/devices";
 import type { DeviceStats } from "@/src/types/device";
 
+type TabType = "details" | "graphs";
+
 export default function DeviceDetailsScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+  const [activeTab, setActiveTab] = useState<TabType>("details");
   const [stats, setStats] = useState<DeviceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [deviceStatus, setDeviceStatus] = useState<"on" | "off">("off");
@@ -58,91 +62,66 @@ export default function DeviceDetailsScreen() {
       <StatusBar style="light" />
 
       {/* Header */}
-      <View className="bg-gray-900 pt-12 pb-4 px-6 flex-row items-center justify-between">
-        <TouchableOpacity onPress={() => router.back()} className="p-2">
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text className="text-white text-xl font-bold">
-          {name || "Device Details"}
-        </Text>
-        <TouchableOpacity onPress={handleToggle} className="p-2">
-          <Ionicons
-            name={deviceStatus === "on" ? "power" : "power-outline"}
-            size={24}
-            color={toggleColor}
-          />
-        </TouchableOpacity>
+      <View className="bg-gray-900 pt-12 pb-4 px-6">
+        <View className="flex-row items-center justify-between mb-4">
+          <TouchableOpacity onPress={() => router.back()} className="p-2">
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text className="text-white text-xl font-bold">
+            {name || "Device Details"}
+          </Text>
+          <TouchableOpacity onPress={handleToggle} className="p-2">
+            <Ionicons
+              name={deviceStatus === "on" ? "power" : "power-outline"}
+              size={24}
+              color={toggleColor}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Tab Navigation */}
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={() => setActiveTab("details")}
+            className={`flex-1 py-3 px-4 rounded-lg items-center ${
+              activeTab === "details"
+                ? "bg-[#7C3AED]"
+                : "bg-gray-800 border border-gray-700"
+            }`}
+          >
+            <Text
+              className={`text-sm font-semibold ${
+                activeTab === "details" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Socket Details
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab("graphs")}
+            className={`flex-1 py-3 px-4 rounded-lg items-center ${
+              activeTab === "graphs"
+                ? "bg-[#7C3AED]"
+                : "bg-gray-800 border border-gray-700"
+            }`}
+          >
+            <Text
+              className={`text-sm font-semibold ${
+                activeTab === "graphs" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Graphs
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-6">
-        {loading ? (
-          <View className="items-center justify-center py-20">
-            <Text className="text-gray-400">Loading...</Text>
-          </View>
-        ) : stats ? (
-          <>
-            {/* Current Measurements Section */}
-            <View className="mb-6">
-              <Text className="text-gray-300 text-lg font-semibold mb-4 px-2">
-                Current measurements
-              </Text>
-
-              <MeasurementCard
-                icon="P"
-                label="Power"
-                unit="Watts"
-                value={`${stats.power} W`}
-              />
-
-              <MeasurementCard
-                icon="V"
-                label="Voltage"
-                unit="Volts"
-                value={`${stats.voltage} V`}
-              />
-
-              <MeasurementCard
-                icon="A"
-                label="Amperage"
-                unit="Ampers"
-                value={`${stats.amperage} A`}
-              />
-            </View>
-
-            {/* Energy Measurements Section */}
-            <View className="mb-6">
-              <Text className="text-gray-300 text-lg font-semibold mb-4 px-2">
-                Energy measurements
-              </Text>
-
-              <MeasurementCard
-                icon="T"
-                label="Today"
-                unit=""
-                value={`${stats.today} kWh`}
-              />
-
-              <MeasurementCard
-                icon="Y"
-                label="Yesterday"
-                unit=""
-                value={`${stats.yesterday} kWh`}
-              />
-
-              <MeasurementCard
-                icon="R"
-                label="Total"
-                unit=""
-                value={`${stats.total} kWh`}
-              />
-            </View>
-          </>
-        ) : (
-          <View className="items-center justify-center py-20">
-            <Text className="text-gray-400">Failed to load device stats</Text>
-          </View>
-        )}
-      </ScrollView>
+      {/* Tab Content */}
+      {activeTab === "details" ? (
+        <DeviceDetailsContent stats={stats} loading={loading} />
+      ) : (
+        <DeviceGraphsContent deviceId={id ? parseInt(id) : 0} />
+      )}
     </View>
   );
 }
