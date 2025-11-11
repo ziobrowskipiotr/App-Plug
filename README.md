@@ -5,95 +5,63 @@ Mobile app for smart-plug managing
 
 ```mermaid
 graph TD
-    subgraph "VPN (Tailscale)"
-        A[Mobile app]
+    subgraph "Internet"
+        G["🌐 Gemini API<br/>(External)<br/>Decides which tool to call"]
     end
-    B["<table style='border-collapse: separate; border-spacing: 0; background-color:#000000;'>
-        <tr style='background-color:#4a90e2; color:white;'>
-            <th>Action</th>
-            <th>Command</th>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>turn on</td>
-            <td style='border:1px solid white;'>spc on [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>turn off</td>
-            <td style='border:1px solid white;'>spc off [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>add device</td>
-            <td style='border:1px solid white;'>spc add [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>remove device</td>
-            <td style='border:1px solid white;'>spc remove [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>get state</td>
-            <td style='border:1px solid white;'>spc state [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>get active power</td>
-            <td style='border:1px solid white;'>spc active-power [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>get voltage</td>
-            <td style='border:1px solid white;'>spc get-voltage [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>get current</td>
-            <td style='border:1px solid white;'>spc get-current [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>get energy today</td>
-            <td style='border:1px solid white;'>spc energy-today [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>get energy yesterday</td>
-            <td style='border:1px solid white;'>spc energy-yesterday [smartplug name]</td>
-        </tr>
-        <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>get energy [from] [to]</td>
-            <td style='border:1px solid white;'>spc-energy --name [smartplug name] --from [date] --to [date]</td>
-        </tr>
-         <tr style='background-color:#000000;'>
-            <td style='border:1px solid white;'>rename device</td>
-            <td style='border:1px solid white;'>spc rename [smartplug name]</td>
-        </tr>
-    </table>"]
-    subgraph "Wi-Fi"
+    
     subgraph "VPN (Tailscale)"
-        subgraph "Raspberry PI Zero"
-        C@{ shape: lin-cyl, label: "App Server" }
-        D@{ shape: lin-cyl, label: "Database" }
-        E@{ shape: lin-cyl, label: "MCP Server" }
+        A["📱 Mobile App"]
+        
+        subgraph "Raspberry Pi"
+            E["MCP Client<br/>client.js<br/>(port 3001)"]
+            C["MCP Server<br/>server.js<br/>(port 3000)"]
+            D[("🗄️ SQLite Database")]
+            
+            subgraph "Tools - Shell Scripts"
+                F1["spc-on / spc-off"]
+                F2["spc-state / spc-voltage<br/>spc-current"]
+                F3["spc-energy-today<br/>spc-energy-yesterday<br/>spc-energy"]
+                F4["spc-add / spc-remove<br/>spc-rename"]
+            end
+        end
+        
+        H["🔌 Smartplug<br/>(Local Wi-Fi)"]
     end
+    
     classDef rpi fill:#003366,stroke:#66aaff,stroke-width:2px,color:white;
-    class C,D,E rpi;
-    end
-        F@{ shape: circle, label: "Smartplug" }
-    end
+    classDef external fill:#666,stroke:#999,stroke-width:2px,color:white;
+    classDef mobile fill:#4a90e2,stroke:#66aaff,stroke-width:2px,color:white;
+    
+    class C,E,D,F1,F2,F3,F4 rpi;
+    class G external;
+    class A mobile;
 
-    A -- "Text action choosing" --> B
-    A -- "Voice action choosing" --> E
-    B -- "Request" --> C
-    E -- "Text action choosing" --> B
-    C -- "Database request" --> D
-    D -- "Database Answer" --> C
-    C -- "(If required) Curl request" --> F
-    F -- "(If required) Curl request" --> C
-    C -- "Answer" --> A
+    A -- "1. Voice/Text input<br/>(via Tailscale)" --> E
+    E -- "2. Sends user request<br/>+ available tools" --> G
+    G -- "3. Analyzes & chooses<br/>which tool to call<br/>Calls MCP tool" --> C
+    C -- "4. Executes chosen<br/>shell script" --> F1
+    C -- "4. Executes chosen<br/>shell script" --> F2
+    C -- "4. Executes chosen<br/>shell script" --> F3
+    C -- "4. Executes chosen<br/>shell script" --> F4
+    F1 -- "5. curl requests" --> H
+    F2 -- "5. curl requests" --> H
+    F3 -- "5. curl requests" --> H
+    F4 -- "5. curl requests/DB" --> H
+    C -- "Database operations" --> D
+    F1 -- "Save to DB" --> D
+    F2 -- "Save to DB" --> D
+    F3 -- "Read from DB" --> D
+    F4 -- "Read/Write to DB" --> D
+    C -- "6. Returns result" --> E
+    E -- "7. Response to user" --> A
 
     linkStyle 0 stroke:#FF2C00,stroke-width:2px;
     linkStyle 1 stroke:#FFE500,stroke-width:2px;
-    linkStyle 2 stroke:#FF8C00,stroke-width:2px;
-    linkStyle 3 stroke:#FFE500,stroke-width:2px;
-    linkStyle 4 stroke:#FF8C00,stroke-width:2px;
-    linkStyle 5 stroke:#FF8C00,stroke-width:2px;
-    linkStyle 6 stroke:#FF8C00,stroke-width:2px;
-    linkStyle 7 stroke:#FF8C00,stroke-width:2px;
-    linkStyle 8 stroke:#FF8C00,stroke-width:2px;
+    linkStyle 2 stroke:#FFE500,stroke-width:2px;
+    linkStyle 3,4,5,6 stroke:#4CAF50,stroke-width:2px;
+    linkStyle 7,8,9,10 stroke:#FFC107,stroke-width:2px;
+    linkStyle 11,12,13,14,15 stroke:#2196F3,stroke-width:2px;
+    linkStyle 16,17 stroke:#9C27B0,stroke-width:2px;
 ```
 
 # Database Schema
