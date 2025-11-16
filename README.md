@@ -1,6 +1,9 @@
 # App-Plug
 Mobile app for smart-plug managing
 
+# Connection
+`ssh piotr@100.96.46.43`
+
 # Architecture
 
 ```mermaid
@@ -84,9 +87,7 @@ erDiagram
     }
 
     devices ||--o{ measurements : "has"
+```
 
-
-
-
-
-
+# Voice to text
+https://www.npmjs.com/package/@appcitor/react-native-voice-to-text

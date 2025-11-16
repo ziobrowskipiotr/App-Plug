@@ -5,14 +5,16 @@ import express from 'express';
 import util from 'node:util';
 import child_process from 'node:child_process';
 
-const PATH_SPCON = "../spc/spc-on.sh";
-const PATH_SPCOFF = "../spc/spc-off.sh";
-const PATH_SPCSTATE = "../spc/spc-state.sh";
-const PATH_SPCVOLTAGE = "../spc/spc-voltage.sh";
-const PATH_SPCCURRENT = "../spc/spc-current.sh";
-const PATH_SPCENERGY_TODAY = "../spc/spc-energy-today.sh";
-const PATH_SPCENERGY_YESTERDAY = "../spc/spc-energy-yesterday.sh";
-const PATH_SPCENERGY = "../spc/spc-energy.sh";
+const plug = "charger";
+
+const PATH_SPCON = `spc on ${plug}`;
+const PATH_SPCOFF = `spc off ${plug}`;
+const PATH_SPCSTATE = `spc state ${plug}`;
+const PATH_SPCVOLTAGE = `spc voltage ${plug}`;
+const PATH_SPCCURRENT = `spc current ${plug}`;
+const PATH_SPCENERGY_TODAY = `spc energy-today ${plug}`;
+const PATH_SPCENERGY_YESTERDAY = `spc energy-yesterday ${plug}`;
+const PATH_SPCENERGY = `spc energy ${plug}`;
 
 const tools = [{
     name: "spc-on",
@@ -71,19 +73,20 @@ for (const tool of tools) {
     },
         async () => {
             try {
-                const { stdout, stderr } = await exec(tool.path);
+                const { stdout } = await exec(tool.path);
                 // console.log(stdout,stderr);
                 return {
-                    content: [{ type: 'text', text: JSON.stringify(stdout) }],
-                    structuredContent: stdout
+                    content: [{ type: 'text', text: String(stdout) }],
+                    structuredContent: {message: String(stdout)}
                 }
             } catch (err) {
-                console.log(err.stdout);
+                console.log(err);
+                const msg = err && (err.stdout || err.message) ? (err.stdout || err.message) : String(err);
                 return {
-                    content: [{ type: 'text', text: JSON.stringify(err) }],
-                    structuredContent: err
-                }
-            }
+                    content: [{ type: 'text', text: String(msg) }],
+                   structuredContent: { message: String(msg) }
+               };
+           }
         }
     )
 }
