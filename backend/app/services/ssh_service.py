@@ -53,15 +53,11 @@ class SSHService:
         return self._execute_command(command)
 
     def get_energy_from_to(self, plug_name, from_date, to_date):
-        command = f"energy --name {plug_name} --from {from_date} --to {to_date}"
+        command = f'energy --name {plug_name} --from "{from_date}" --to "{to_date}"'
         return self._execute_command(command)
 
     def get_voltage(self, plug_name):
         command = f"voltage {plug_name}"
-        return self._execute_command(command)
-
-    def get_state(self, plug_name):
-        command = f"state {plug_name}"
         return self._execute_command(command)
 
     def get_current(self, plug_name):
@@ -70,4 +66,12 @@ class SSHService:
 
     def get_status(self, plug_name):
         command = f"status {plug_name}"
+        return self._execute_command(command)
+
+    def turn_device_on(self, plug_name):
+        command = f"on {plug_name}"
+        return self._execute_command(command)
+
+    def turn_device_off(self, plug_name):
+        command = f"off {plug_name}"
         return self._execute_command(command)

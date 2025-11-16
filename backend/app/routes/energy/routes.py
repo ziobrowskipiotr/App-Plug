@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import wraps
 from flask import Blueprint, jsonify, request, json
 
@@ -43,15 +44,14 @@ def get_energy_history(plug_name):
     from_date = request.args.get('from')
     to_date = request.args.get('to')
 
-    if not from_date or not to_date:
-        return jsonify({"error": "Missing 'from' or 'to' date parameters."}), 400
+    start = str(datetime.strptime(from_date, "%d-%m-%Y %H:%M:%S"))
+    end = str(datetime.strptime(to_date, "%d-%m-%Y %H:%M:%S"))
 
     try:
-        ssh_client = SSHService()
-        result = ssh_client.get_energy_from_to(plug_name, from_date, to_date)
+        result = ssh_client.get_energy_from_to(plug_name, start, end)
 
         return jsonify({
-            "range": f"{from_date} to {to_date}",
+            "range": f"{start} to {end}",
             "consumption": result,
             "unit": "kWh"
         }), 200
@@ -85,11 +85,6 @@ def get_power(plug_name):
     except Exception as e:
         return jsonify({"error": "Failed to get active power", "details": str(e)}), 500
 
-
-@energy_bp.route("/<string:plug_name>/state", methods=["GET"])
-def get_state(plug_name):
-    output = ssh_client.get_state(plug_name)
-    return output, "state"
 
 @energy_bp.route("/<string:plug_name>/current", methods=["GET"])
 @ssh_request_handler
