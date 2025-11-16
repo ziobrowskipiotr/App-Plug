@@ -5,16 +5,14 @@ import express from 'express';
 import util from 'node:util';
 import child_process from 'node:child_process';
 
-const plug = "charger";
-
-const PATH_SPCON = `spc on ${plug}`;
-const PATH_SPCOFF = `spc off ${plug}`;
-const PATH_SPCSTATE = `spc state ${plug}`;
-const PATH_SPCVOLTAGE = `spc voltage ${plug}`;
-const PATH_SPCCURRENT = `spc current ${plug}`;
-const PATH_SPCENERGY_TODAY = `spc energy-today ${plug}`;
-const PATH_SPCENERGY_YESTERDAY = `spc energy-yesterday ${plug}`;
-const PATH_SPCENERGY = `spc energy ${plug}`;
+const PATH_SPCON = `spc on`;
+const PATH_SPCOFF = `spc off`;
+const PATH_SPCSTATE = `spc state`;
+const PATH_SPCVOLTAGE = `spc voltage`;
+const PATH_SPCCURRENT = `spc current`;
+const PATH_SPCENERGY_TODAY = `spc energy-today`;
+const PATH_SPCENERGY_YESTERDAY = `spc energy-yesterday`;
+const PATH_SPCENERGY = `spc energy`;
 
 const tools = [{
     name: "spc-on",
@@ -69,11 +67,12 @@ for (const tool of tools) {
     server.registerTool(tool.name, {
         title: tool.title,
         description: tool.description,
+        inputSchema: {plugName: z.string()},
         outputSchema: { message: z.string() }
     },
-        async () => {
+        async ({plugName}) => {
             try {
-                const { stdout } = await exec(tool.path);
+                const { stdout } = await exec(tool.path+` ${plugName}`);
                 // console.log(stdout,stderr);
                 return {
                     content: [{ type: 'text', text: String(stdout) }],
