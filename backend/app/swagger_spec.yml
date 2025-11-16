@@ -1,0 +1,236 @@
+swagger: "2.0"
+info:
+  title: Energy API
+  version: 1.0.0
+  description: API documentation for energy monitoring and management endpoints.
+
+paths:
+  /api/v1/energy/{plug_name}/today:
+    get:
+      tags:
+        - Energy
+      summary: Get today's energy consumption
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Today's energy consumption
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plug_name:
+                    type: string
+                  consumption:
+                    type: string
+                  unit:
+                    type: string
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/yesterday:
+    get:
+      tags:
+        - Energy
+      summary: Get yesterday's energy consumption
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Yesterday's energy consumption
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/history:
+    get:
+      tags:
+        - Energy
+      summary: Get energy consumption in a time range
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: from
+          required: true
+          schema:
+            type: string
+          description: Start datetime in DD-MM-YYYY HH:MM:SS format
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+          description: End datetime in DD-MM-YYYY HH:MM:SS format
+      responses:
+        '200':
+          description: Energy usage for the given time period
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad date parameters
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/voltage:
+    get:
+      tags:
+        - Energy
+      summary: Get current voltage value
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current voltage
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/power:
+    get:
+      tags:
+        - Energy
+      summary: Get current power usage
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current power
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/current:
+    get:
+      tags:
+        - Energy
+      summary: Get current (amperage)
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current amperage
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/status:
+    get:
+      tags:
+        - Energy
+      summary: Get current plug status
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: JSON plug status
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/manage/{plug_name}/turn-on:
+    get:
+      tags:
+        - Manage
+      summary: Turn a plug on
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Device turned on successfully
+        '500':
+          description: Server error
+
+  /api/v1/manage/{plug_name}/turn-off:
+    get:
+      tags:
+        - Manage
+      summary: Turn a plug off
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Device turned off successfully
+        '500':
+          description: Server error
+
+  /api/v1/manage/{plug_name}/state:
+    get:
+      tags:
+        - Manage
+      summary: Get current state of the plug
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current state of the plug
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: string
+        '500':
+          description: Server error
