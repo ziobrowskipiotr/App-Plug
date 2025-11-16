@@ -1,6 +1,5 @@
 from functools import wraps
 from flask import Blueprint, jsonify, request, json
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.services.ssh_service import SSHService
 
@@ -28,21 +27,18 @@ def ssh_request_handler(func):
     return wrapper
 
 @energy_bp.route("/<string:plug_name>/today", methods=["GET"])
-@jwt_required()
 @ssh_request_handler
 def get_energy_today(plug_name):
     output = ssh_client.get_energy_today(plug_name)
     return output, "consumption", "kWh"
 
 @energy_bp.route("/<string:plug_name>/yesterday", methods=["GET"])
-@jwt_required()
 @ssh_request_handler
 def get_energy_yesterday(plug_name):
     output = ssh_client.get_energy_yesterday(plug_name)
     return output, "consumption", "kWh"
 
 @energy_bp.route("/<string:plug_name>/history", methods=["GET"])
-@jwt_required()
 def get_energy_history(plug_name):
     from_date = request.args.get('from')
     to_date = request.args.get('to')
@@ -64,7 +60,6 @@ def get_energy_history(plug_name):
         return jsonify({"error": "Failed to get energy history", "details": str(e)}), 500
 
 @energy_bp.route("/<string:plug_name>/voltage", methods=["GET"])
-@jwt_required()
 def get_voltage(plug_name):
     try:
         ssh_client = SSHService()
@@ -78,7 +73,6 @@ def get_voltage(plug_name):
         return jsonify({"error": "Failed to get voltage", "details": str(e)}), 500
 
 @energy_bp.route("/<string:plug_name>/power", methods=["GET"])
-@jwt_required()
 def get_power(plug_name):
     try:
         ssh_client = SSHService()
@@ -93,21 +87,18 @@ def get_power(plug_name):
 
 
 @energy_bp.route("/<string:plug_name>/state", methods=["GET"])
-@jwt_required()
 def get_state(plug_name):
     output = ssh_client.get_state(plug_name)
     return output, "state"
 
 @energy_bp.route("/<string:plug_name>/current", methods=["GET"])
 @ssh_request_handler
-@jwt_required()
 def get_current(plug_name):
     output = ssh_client.get_current(plug_name)
     return output, "current", "A"
 
 
 @energy_bp.route("/<string:plug_name>/status", methods=["GET"])
-@jwt_required()
 def get_status(plug_name):
     try:
         json_string_result = ssh_client.get_status(plug_name)
