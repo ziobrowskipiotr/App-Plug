@@ -55,7 +55,7 @@ export const useDeviceStats = (id: number, enabled = true) => {
     queryKey: deviceKeys.stats(id),
     queryFn: () => devicesService.getDeviceStats(id),
     enabled: enabled && !!id,
-    refetchInterval: 5000, // Refetch every 5 seconds for live updates
+    refetchInterval: 2000, // Refetch every 5 seconds for live updates
   });
 };
 
