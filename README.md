@@ -89,6 +89,64 @@ erDiagram
     devices ||--o{ measurements : "has"
 ```
 
+# Running the Project with Docker
+
+To run the full workflow with both **backend** and **mobile app**, follow these steps:
+
+### 1. Set the host IP in `.env`
+
+Before building the containers, add your host machine’s local IP:
+
+```env
+HOST_IP=x.x.x.x
+```
+
+> Replace `x.x.x.x` with your local IP. This ensures the Expo app inside Docker generates a QR code your phone can access.
+
+---
+
+### 2. Build Docker containers
+
+```bash
+docker compose build
+```
+
+This installs dependencies and sets up the containers.
+
+---
+
+### 3. Start the containers
+
+```bash
+docker compose up
+```
+
+You will see logs for both:
+
+* **Backend** – listening on port 8080
+* **Mobile app** – Metro Bundler starting, waiting on Expo
+
+---
+
+### 4. Access the mobile app via Expo Go
+
+1. Install **[Expo Go](https://expo.dev/client)** on your device.
+2. Make sure your phone is on the same Wi-Fi as your host machine.
+3. Look at **mobile-app container logs** – scan the QR code like:
+
+```
+exp://x.x.x.x:8081
+```
+
+4. The app should open in Expo Go.
+
+---
+
+### Notes
+
+* `HOST_IP` in `.env` is critical – Expo uses it to generate QR codes reachable from your phone.
+
+
 # Voice to text
 https://www.npmjs.com/package/@appcitor/react-native-voice-to-text
 
