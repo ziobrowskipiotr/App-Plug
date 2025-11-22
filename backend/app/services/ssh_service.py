@@ -40,6 +40,10 @@ class SSHService:
         command = f"state {plug_name}"
         return self._execute_command(command)
 
+    def get_devices(self):
+        command = f"devices"
+        return self._execute_command(command)
+
     def get_active_power(self, plug_name):
         command = f"active-power {plug_name}"
         return self._execute_command(command)
