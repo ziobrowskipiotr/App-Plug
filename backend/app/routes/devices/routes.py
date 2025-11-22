@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, json
+from flask import Blueprint, jsonify, json, request
 from app.services.ssh_service import SSHService
 
 devices_bp = Blueprint('devices', __name__)
@@ -62,3 +62,70 @@ def toggle_device(plug_name):
             "plug_name": plug_name,
             "message": str(e)
         }), 500
+
+
+@devices_bp.route("/<string:current_name>/rename", methods=["PUT"])
+def rename_device(current_name):
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({"error": "Invalid JSON body"}), 400
+
+    if not data or 'new_name' not in data:
+        return jsonify({"error": "Missing 'new_name' in request body"}), 400
+
+    new_name = data['new_name']
+
+    try:
+        raw_output = ssh_client.get_devices()
+        devices_list = json.loads(raw_output)
+
+        for device in devices_list:
+            if device.get('name') == new_name:
+                return jsonify({
+                    "error": f"Name '{new_name}' already exists. Choose another name."
+                }), 409
+
+        ssh_client.rename_device(current_name, new_name)
+
+        return jsonify({
+            "status": "success",
+            "old_name": current_name,
+            "new_name": new_name,
+        })
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "error": "Failed to parse device list from server",
+            "raw_output": raw_output
+        }), 502
+
+    except Exception as e:
+        return jsonify({"error": f"An internal error occurred: {str(e)}"}), 500
+
+
+@devices_bp.route("/<string:plug_name>/remove", methods=["DELETE"])
+def remove_device(plug_name):
+    try:
+        raw_output = ssh_client.get_devices()
+        devices_list = json.loads(raw_output)
+
+        existing_names = [d.get('name') for d in devices_list]
+
+        if plug_name not in existing_names:
+            return jsonify({
+                "error": f"Device '{plug_name}' not found. Cannot remove non-existent device."
+            }), 404
+
+        result = ssh_client.remove_device(plug_name)
+
+        return jsonify({
+            "status": "success",
+            "message": f"Device '{plug_name}' has been removed",
+            "result": result
+        })
+
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse device list"}), 502
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

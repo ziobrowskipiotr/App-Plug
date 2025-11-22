@@ -79,3 +79,12 @@ class SSHService:
     def turn_device_off(self, plug_name):
         command = f"off {plug_name}"
         return self._execute_command(command)
+
+    def rename_device(self, current_name, new_name):
+        command = f"rename --name '{current_name}' --new-name '{new_name}'"
+        return self._execute_command(command)
+
+
+    def remove_device(self, plug_name):
+        command = f"remove --name '{plug_name}'"
+        return self._execute_command(command)
