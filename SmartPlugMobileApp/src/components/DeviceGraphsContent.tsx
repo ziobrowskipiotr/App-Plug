@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
-import { devicesService } from "@/src/services/devices";
+import { useDevice, useHistoryGraphData } from "@/src/hooks/useDevices";
 
 type TimePeriod = "1 day" | "1 week" | "1 month";
 
@@ -10,109 +10,40 @@ interface DeviceGraphsContentProps {
   deviceName?: string;
 }
 
-/**
- * Format date to YYYY-MM-DD format
- */
-const formatDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-/**
- * Get date range for time period
- */
-const getDateRange = (period: TimePeriod): { from: string; to: string } => {
-  const to = new Date();
-  const from = new Date();
-
-  if (period === "1 day") {
-    from.setDate(to.getDate() - 1);
-  } else if (period === "1 week") {
-    from.setDate(to.getDate() - 7);
-  } else if (period === "1 month") {
-    from.setMonth(to.getMonth() - 1);
-  }
-
-  return {
-    from: formatDate(from),
-    to: formatDate(to),
-  };
-};
-
 export const DeviceGraphsContent: React.FC<DeviceGraphsContentProps> = ({
   deviceId,
   deviceName,
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("1 day");
-  const [loading, setLoading] = useState(false);
 
-  // Fetch real data from API when deviceName is available
-  useEffect(() => {
-    if (deviceName && selectedPeriod) {
-      // Optionally fetch real data here
-      // const fetchHistory = async () => {
-      //   try {
-      //     setLoading(true);
-      //     const { from, to } = getDateRange(selectedPeriod);
-      //     const history = await devicesService.getHistory(deviceName, from, to);
-      //     // Process history data for chart
-      //   } catch (error) {
-      //     console.error('Error fetching history:', error);
-      //   } finally {
-      //     setLoading(false);
-      //   }
-      // };
-      // fetchHistory();
-    }
-  }, [deviceName, selectedPeriod]);
+  // Get device to ensure we have the device name
+  const { data: device } = useDevice(deviceId, !!deviceId);
+  const plugName = deviceName || device?.name || "";
 
-  // Mock data generator based on time period
-  // Replace this with real API data when available
+  // Fetch history graph data using TanStack Query
+  const {
+    data: historyData = [],
+    isLoading,
+    isRefetching,
+  } = useHistoryGraphData(plugName, selectedPeriod, !!plugName);
+
+  // Transform history data into chart format
   const chartData = useMemo(() => {
-    const periods: Record<TimePeriod, number> = {
-      "1 day": 24, // 24 hours
-      "1 week": 7, // 7 days
-      "1 month": 30, // 30 days
-    };
-
-    const dataPoints = periods[selectedPeriod];
-    const data = [];
-
-    for (let i = 0; i < dataPoints; i++) {
-      // Generate random energy consumption data (in kWh)
-      const baseValue = 50;
-      const variation = Math.random() * 80 + 10; // Random value between 10-90
-      const value = Math.round(baseValue + variation);
-
-      let label = "";
-      if (selectedPeriod === "1 day") {
-        // Show hours
-        label = `${i.toString().padStart(2, "0")}:00`;
-      } else if (selectedPeriod === "1 week") {
-        // Show days
-        const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        label = days[i % 7];
-      } else {
-        // Show dates for month
-        label = `${i + 1}`;
-      }
-
-      data.push({
-        value,
-        label,
-        labelTextStyle: {
-          color: "#9CA3AF",
-          fontSize: 10,
-        },
-        frontColor: "#7C3AED",
-        gradientColor: "#7C3AED",
-      });
+    if (!historyData || historyData.length === 0) {
+      return [];
     }
 
-    return data;
-  }, [selectedPeriod]);
+    return historyData.map((item, index) => ({
+      value: Math.round(item.value * 100) / 100, // Round to 2 decimal places
+      label: item.label,
+      labelTextStyle: {
+        color: "#9CA3AF",
+        fontSize: 10,
+      },
+      frontColor: "#7C3AED",
+      gradientColor: "#7C3AED",
+    }));
+  }, [historyData]);
 
   const timePeriods: TimePeriod[] = ["1 day", "1 week", "1 month"];
 
@@ -147,67 +78,91 @@ export const DeviceGraphsContent: React.FC<DeviceGraphsContentProps> = ({
           Energy Consumption ({selectedPeriod})
         </Text>
 
-        <View className="items-center">
-          <LineChart
-            data={chartData}
-            width={300}
-            height={200}
-            spacing={
-              selectedPeriod === "1 day"
-                ? 25
-                : selectedPeriod === "1 week"
-                ? 35
-                : 15
-            }
-            thickness={3}
-            color="#7C3AED"
-            hideRules
-            hideYAxisText={false}
-            yAxisColor="#9CA3AF"
-            xAxisColor="#9CA3AF"
-            yAxisTextStyle={{ color: "#9CA3AF", fontSize: 10 }}
-            backgroundColor="transparent"
-            curved
-            areaChart
-            startFillColor="#7C3AED"
-            endFillColor="rgba(124, 58, 237, 0.1)"
-            startOpacity={0.9}
-            endOpacity={0.2}
-            hideDataPoints={chartData.length > 20}
-            dataPointsColor="#7C3AED"
-            dataPointsRadius={3}
-            textShiftY={-2}
-            textShiftX={-5}
-            textFontSize={10}
-            textColor="#9CA3AF"
-          />
-        </View>
+        {isLoading || isRefetching ? (
+          <View className="items-center justify-center py-20">
+            <Text className="text-gray-400">Loading chart data...</Text>
+          </View>
+        ) : chartData.length === 0 ? (
+          <View className="items-center justify-center py-20">
+            <Text className="text-gray-400">No data available</Text>
+          </View>
+        ) : (
+          <>
+            <View className="items-center">
+              <LineChart
+                data={chartData}
+                width={300}
+                height={200}
+                spacing={
+                  selectedPeriod === "1 day"
+                    ? 25
+                    : selectedPeriod === "1 week"
+                    ? 35
+                    : 15
+                }
+                thickness={3}
+                color="#7C3AED"
+                hideRules
+                hideYAxisText={false}
+                yAxisColor="#9CA3AF"
+                xAxisColor="#9CA3AF"
+                yAxisTextStyle={{ color: "#9CA3AF", fontSize: 10 }}
+                backgroundColor="transparent"
+                curved
+                areaChart
+                startFillColor="#7C3AED"
+                endFillColor="rgba(124, 58, 237, 0.1)"
+                startOpacity={0.9}
+                endOpacity={0.2}
+                hideDataPoints={chartData.length > 20}
+                dataPointsColor="#7C3AED"
+                dataPointsRadius={3}
+                textShiftY={-2}
+                textShiftX={-5}
+                textFontSize={10}
+                textColor="#9CA3AF"
+              />
+            </View>
 
-        {/* Chart Stats */}
-        <View className="mt-6 pt-4 border-t border-gray-700">
-          <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-gray-400 text-sm">Average</Text>
-            <Text className="text-white text-sm font-semibold">
-              {Math.round(
-                chartData.reduce((sum, item) => sum + item.value, 0) /
-                  chartData.length
-              )}{" "}
-              kWh
-            </Text>
-          </View>
-          <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-gray-400 text-sm">Max</Text>
-            <Text className="text-white text-sm font-semibold">
-              {Math.max(...chartData.map((item) => item.value))} kWh
-            </Text>
-          </View>
-          <View className="flex-row justify-between items-center">
-            <Text className="text-gray-400 text-sm">Min</Text>
-            <Text className="text-white text-sm font-semibold">
-              {Math.min(...chartData.map((item) => item.value))} kWh
-            </Text>
-          </View>
-        </View>
+            {/* Chart Stats */}
+            <View className="mt-6 pt-4 border-t border-gray-700">
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="text-gray-400 text-sm">Average</Text>
+                <Text className="text-white text-sm font-semibold">
+                  {chartData.length > 0
+                    ? (
+                        chartData.reduce((sum, item) => sum + item.value, 0) /
+                        chartData.length
+                      ).toFixed(2)
+                    : 0}{" "}
+                  kWh
+                </Text>
+              </View>
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="text-gray-400 text-sm">Max</Text>
+                <Text className="text-white text-sm font-semibold">
+                  {chartData.length > 0
+                    ? Math.max(...chartData.map((item) => item.value)).toFixed(
+                        2
+                      )
+                    : 0}{" "}
+                  kWh
+                </Text>
+              </View>
+              <View className="flex-row justify-between items-center">
+                <Text className="text-gray-400 text-sm">Min</Text>
+                <Text className="text-white text-sm font-semibold">
+                  {chartData.length > 0
+                    ? Math.min(...chartData.map((item) => item.value)).toFixed(
+                        2
+                      )
+                    : 0}{" "}
+                  kWh
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
       </View>
 
       {/* Additional Info */}

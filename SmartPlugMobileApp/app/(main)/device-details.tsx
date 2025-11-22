@@ -14,18 +14,24 @@ import {
 type TabType = "details" | "graphs";
 
 export default function DeviceDetailsScreen() {
-  const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+  const { id, name, state } = useLocalSearchParams<{
+    id: string;
+    name: string;
+    state: string;
+  }>();
   const [activeTab, setActiveTab] = useState<TabType>("details");
 
   const deviceId = id ? parseInt(id) : 0;
-  const { data: device } = useDevice(deviceId, !!id);
+  const { data: device, isLoading: deviceLoading } = useDevice(deviceId, !!id);
   const { data: stats, isLoading: statsLoading } = useDeviceStats(
     deviceId,
-    !!id
+    !!id && !!device
   );
   const toggleDeviceMutation = useToggleDevice();
 
-  const deviceStatus = device?.status || "off";
+  // Normalize state to lowercase for consistent comparison
+  const deviceState = device?.state?.toLowerCase().trim() || state;
+  const isDeviceOn = deviceState === "on";
 
   const handleToggle = async () => {
     if (!id) return;
@@ -36,7 +42,7 @@ export default function DeviceDetailsScreen() {
     }
   };
 
-  const toggleColor = deviceStatus === "on" ? "#10B981" : "#EF4444";
+  const toggleColor = isDeviceOn ? "#10B981" : "#EF4444";
 
   return (
     <View className="flex-1 bg-[#121212]">
@@ -53,7 +59,7 @@ export default function DeviceDetailsScreen() {
           </Text>
           <TouchableOpacity onPress={handleToggle} className="p-2">
             <Ionicons
-              name={deviceStatus === "on" ? "power" : "power-outline"}
+              name={isDeviceOn ? "power" : "power-outline"}
               size={24}
               color={toggleColor}
             />
@@ -99,7 +105,7 @@ export default function DeviceDetailsScreen() {
 
       {/* Tab Content */}
       {activeTab === "details" ? (
-        <DeviceDetailsContent stats={stats || null} loading={statsLoading} />
+        <DeviceDetailsContent stats={stats} loading={statsLoading} />
       ) : (
         <DeviceGraphsContent deviceId={deviceId} deviceName={name} />
       )}

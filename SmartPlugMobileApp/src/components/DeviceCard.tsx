@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { Device } from "@/src/types/device";
+import type { DeviceWithState } from "@/src/types/device";
 
 interface DeviceCardProps {
-  device: Device;
+  device: DeviceWithState;
   onToggle: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -16,7 +16,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const isOn = device.status === "on";
+  const isOn = device.state.toLowerCase().trim() === "on";
   const toggleColor = isOn ? "#10B981" : "#EF4444";
 
   return (
@@ -31,7 +31,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
         <Text className="text-white text-lg font-semibold mb-1">
           {device.name}
         </Text>
-        <Text className="text-gray-400 text-sm">{device.ip}</Text>
+        <Text className="text-gray-400 text-sm">{device.ipv4}</Text>
       </View>
 
       {/* Actions */}

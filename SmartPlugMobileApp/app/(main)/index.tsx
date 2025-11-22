@@ -15,12 +15,13 @@ import { AiVoiceInputModal } from "@/src/components/AiVoiceInputModal";
 import { Button } from "@/src/components/Button";
 import { authService } from "@/src/services/auth";
 import { useDevices, useToggleDevice } from "@/src/hooks/useDevices";
-import type { Device } from "@/src/types/device";
+import type { Device, DeviceWithState } from "@/src/types/device";
 
 export default function DevicesScreen() {
   const [showAiModal, setShowAiModal] = useState(false);
   const { data: devices = [], isLoading, refetch, isRefetching } = useDevices();
-  const toggleDeviceMutation = useToggleDevice();
+  console.log(devices);
+  const { mutateAsync: toggleDevice } = useToggleDevice();
 
   const handleRefresh = () => {
     refetch();
@@ -28,7 +29,7 @@ export default function DevicesScreen() {
 
   const handleToggle = async (deviceId: number) => {
     try {
-      await toggleDeviceMutation.mutateAsync(deviceId);
+      await toggleDevice(deviceId);
     } catch (error) {
       console.error("Error toggling device:", error);
     }
@@ -43,10 +44,14 @@ export default function DevicesScreen() {
     router.push("/(main)/add-device");
   };
 
-  const handleDevicePress = (device: Device) => {
+  const handleDevicePress = (device: DeviceWithState) => {
     router.push({
       pathname: "/(main)/device-details",
-      params: { id: device.id.toString(), name: device.name },
+      params: {
+        id: device.id.toString(),
+        name: device.name,
+        state: device.state,
+      },
     });
   };
 
@@ -60,14 +65,15 @@ export default function DevicesScreen() {
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text className="text-white text-xl font-bold">Devices</Text>
-        <TouchableOpacity onPress={handleAddDevice} className="p-2">
-          <Ionicons name="add" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
       </View>
 
       {/* Devices List */}
       <ScrollView
         className="flex-1 px-4 pt-4"
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: 96,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -77,11 +83,11 @@ export default function DevicesScreen() {
         }
       >
         {isLoading ? (
-          <View className="items-center justify-center py-20">
+          <View className="flex-1 items-center justify-center py-20">
             <Text className="text-gray-400">Loading devices...</Text>
           </View>
         ) : devices.length === 0 ? (
-          <View className="items-center justify-center py-20">
+          <View className="flex-1 items-center justify-center py-20">
             <Text className="text-gray-400 mb-4">No devices found</Text>
             <Button
               onPress={handleAddDevice}
@@ -90,27 +96,39 @@ export default function DevicesScreen() {
             />
           </View>
         ) : (
-          devices.map((device) => (
-            <TouchableOpacity
-              key={device.id}
-              onPress={() => handleDevicePress(device)}
-              activeOpacity={0.7}
-            >
-              <DeviceCard
-                device={device}
-                onToggle={() => handleToggle(device.id)}
-                onEdit={() => {
-                  // Mock edit action
-                  console.log("Edit device:", device.id);
-                }}
-                onDelete={() => {
-                  // Mock delete action
-                  console.log("Delete device:", device.id);
-                }}
-              />
-            </TouchableOpacity>
-          ))
+          <>
+            {devices.map((device) => (
+              <TouchableOpacity
+                key={device.id}
+                onPress={() => handleDevicePress(device)}
+                activeOpacity={0.7}
+              >
+                <DeviceCard
+                  device={device}
+                  onToggle={() => handleToggle(device.id)}
+                  onEdit={() => {
+                    console.log("Edit device:", device.id);
+                  }}
+                  onDelete={() => {
+                    console.log("Delete device:", device.id);
+                  }}
+                />
+              </TouchableOpacity>
+            ))}
+          </>
         )}
+
+        {/* Swipe to refresh hint na dole */}
+        <View className="mt-6 items-center justify-center opacity-60">
+          <Ionicons
+            name="arrow-down-circle-outline"
+            size={25}
+            color="#9CA3AF"
+          />
+          <Text className="text-gray-400 text-s mt-1">
+            Swipe down to refresh
+          </Text>
+        </View>
       </ScrollView>
 
       {/* Floating AI Button */}

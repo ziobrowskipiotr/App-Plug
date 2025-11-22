@@ -4,7 +4,7 @@ import { MeasurementCard } from "@/src/components/MeasurementCard";
 import type { DeviceStats } from "@/src/types/device";
 
 interface DeviceDetailsContentProps {
-  stats: DeviceStats | null;
+  stats: DeviceStats | undefined;
   loading: boolean;
 }
 
@@ -12,18 +12,10 @@ export const DeviceDetailsContent: React.FC<DeviceDetailsContentProps> = ({
   stats,
   loading,
 }) => {
-  if (loading) {
+  if (loading || !stats) {
     return (
       <View className="items-center justify-center py-20">
         <Text className="text-gray-400">Loading...</Text>
-      </View>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <View className="items-center justify-center py-20">
-        <Text className="text-gray-400">Failed to load device stats</Text>
       </View>
     );
   }
