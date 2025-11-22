@@ -1,6 +1,7 @@
 import { api } from "./api";
 import type {
   Device,
+  DeviceWithState,
   DeviceStats,
   DeviceFormData,
   TodayConsumptionResponse,
@@ -11,46 +12,71 @@ import type {
   StateResponse,
   CurrentResponse,
   StatusResponse,
+  GetDevicesResponse,
 } from "@/src/types/device";
 
-// Mock devices storage (in real app, this would be fetched from an API)
-let mockDevices: Device[] = [
-  { id: 1, name: "Socket kitchen", ip: "100.10.129.10", status: "on" },
-  { id: 2, name: "Socket living room", ip: "100.10.129.11", status: "off" },
-  { id: 3, name: "Socket bathroom", ip: "100.10.129.12", status: "off" },
-];
-
-let nextId = 4;
-
-/**
- * Normalize plug name for API usage (lowercase, replace spaces with underscores)
- */
-const normalizePlugName = (name: string): string => {
-  return name.toLowerCase().replace(/\s+/g, "_");
-};
-
-/**
- * Get plug name from device (can be name or a normalized version)
- */
-const getPlugName = (device: Device | string): string => {
-  if (typeof device === "string") {
-    return normalizePlugName(device);
-  }
-  return normalizePlugName(device.name);
-};
-
 export const devicesService = {
-  async getDevices(): Promise<Device[]> {
-    // TODO: Replace with actual API call to get list of devices
-    // For now, return mock devices
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return [...mockDevices];
+  /**
+   * GET /api/v1/devices/
+   * Get list of all devices
+   */
+  async getDevices(): Promise<GetDevicesResponse> {
+    try {
+      const response = await api.get<GetDevicesResponse>("/api/v1/devices/");
+
+      if (!Array.isArray(response.data)) {
+        console.error("Unexpected response format:", response.data);
+        return [];
+      }
+
+      // Fetch states for all devices in parallel
+      const devicesWithStates = await Promise.all(
+        response.data.map(async (device, index) => {
+          try {
+            // Fetch state for each device
+            const stateResponse = await api.get<StateResponse>(
+              `/api/v1/devices/${device.name}/state`
+            );
+
+            const stateValue = stateResponse.data.state;
+            // Normalize state: backend returns "ON"/"OFF", convert to lowercase
+            const normalizedState =
+              typeof stateValue === "string"
+                ? stateValue.toLowerCase().trim()
+                : String(stateValue || "")
+                    .toLowerCase()
+                    .trim();
+
+            return {
+              ...device,
+              state: normalizedState === "on" ? "on" : "off",
+            };
+          } catch (error) {
+            // If state fetch fails, use default state from device or "off"
+            console.warn(`Failed to fetch state for ${device.name}:`, error);
+            // Return device with existing state or default to "off"
+            return {
+              ...device,
+              state: "off",
+            };
+          }
+        })
+      );
+
+      return devicesWithStates;
+    } catch (error) {
+      console.error("Error fetching devices:", error);
+      throw new Error("Failed to fetch devices");
+    }
   },
 
-  async getDevice(id: number): Promise<Device> {
-    // TODO: Replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    const device = mockDevices.find((d) => d.id === id);
+  /**
+   * Get a single device by ID
+   * This requires fetching all devices and finding the one with matching ID
+   */
+  async getDevice(id: number): Promise<DeviceWithState> {
+    const devices = await this.getDevices();
+    const device = devices.find((d) => d.id === id);
     if (!device) {
       throw new Error("Device not found");
     }
@@ -58,35 +84,50 @@ export const devicesService = {
   },
 
   async addDevice(data: DeviceFormData): Promise<Device> {
-    // TODO: Replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const newDevice: Device = {
-      id: nextId++,
-      name: data.name,
-      ip: data.ip,
-      status: "off",
-    };
-    mockDevices.push(newDevice);
-    return newDevice;
+    // TODO: Replace with actual API call when backend endpoint is available
+    throw new Error("Add device endpoint not yet implemented in backend");
   },
 
-  async toggleDevice(id: number): Promise<Device> {
-    // TODO: Implement toggle using state endpoint if available
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const device = mockDevices.find((d) => d.id === id);
-    if (!device) {
-      throw new Error("Device not found");
+  /**
+   * POST /api/v1/devices/<plug_name>/toggle
+   * Toggle device state (ON/OFF)
+   */
+  async toggleDevice(id: number): Promise<DeviceWithState> {
+    try {
+      // First get the device to find its name
+      const device = await this.getDevice(id);
+      const plugName = device.name;
+
+      // Call the toggle endpoint
+      const response = await api.post<{
+        status: string;
+        action: string;
+        plug_name: string;
+        result: string;
+        new_state: string;
+      }>(`/api/v1/devices/${plugName}/toggle`);
+
+      // Return updated device with new state
+      return {
+        ...device,
+        state: response.data.new_state.toLowerCase().trim(),
+      };
+    } catch (error) {
+      console.error("Error toggling device:", error);
+      throw error;
     }
-    device.status = device.status === "on" ? "off" : "on";
-    return device;
   },
 
+  /**
+   * Get device stats by device ID
+   * Fetches all stats in parallel from the energy endpoints
+   */
   async getDeviceStats(id: number): Promise<DeviceStats> {
     try {
       const device = await this.getDevice(id);
-      const plugName = getPlugName(device);
+      const plugName = device.name;
 
-      // Fetch all stats in parallel
+      // Fetch all stats in parallel from /api/v1/energy/<plug_name>/ endpoints
       const [
         voltageRes,
         powerRes,
@@ -95,27 +136,53 @@ export const devicesService = {
         yesterdayRes,
         statusRes,
       ] = await Promise.all([
-        this.getVoltage(plugName).catch(() => null),
-        this.getPower(plugName).catch(() => null),
-        this.getCurrent(plugName).catch(() => null),
-        this.getTodayConsumption(plugName).catch(() => null),
-        this.getYesterdayConsumption(plugName).catch(() => null),
-        this.getStatus(plugName).catch(() => null),
+        this.getVoltage(plugName).catch((err) => {
+          console.warn(`Failed to fetch voltage for ${plugName}:`, err);
+          return null;
+        }),
+        this.getPower(plugName).catch((err) => {
+          console.warn(`Failed to fetch power for ${plugName}:`, err);
+          return null;
+        }),
+        this.getCurrent(plugName).catch((err) => {
+          console.warn(`Failed to fetch current for ${plugName}:`, err);
+          return null;
+        }),
+        this.getTodayConsumption(plugName).catch((err) => {
+          console.warn(
+            `Failed to fetch today consumption for ${plugName}:`,
+            err
+          );
+          return null;
+        }),
+        this.getYesterdayConsumption(plugName).catch((err) => {
+          console.warn(
+            `Failed to fetch yesterday consumption for ${plugName}:`,
+            err
+          );
+          return null;
+        }),
+        this.getStatus(plugName).catch((err) => {
+          console.warn(`Failed to fetch status for ${plugName}:`, err);
+          return null;
+        }),
       ]);
 
-      // Calculate total from history if needed, or use a default
+      // Extract total from status if available
       let total = 0;
       if (statusRes) {
-        // Try to extract total from status if available
-        total = statusRes.total || statusRes.consumption_total || 0;
+        // Try various possible keys for total consumption
+        total = parseFloat(statusRes.energy_total) || 0;
       }
 
+      // Parse numeric values from string responses
       return {
-        power: powerRes ? parseFloat(powerRes.power) : 0,
-        voltage: voltageRes ? parseFloat(voltageRes.voltage) : 0,
-        amperage: currentRes ? parseFloat(currentRes.current) : 0,
-        today: todayRes ? parseFloat(todayRes.consumption) : 0,
-        yesterday: yesterdayRes ? parseFloat(yesterdayRes.consumption) : 0,
+        power: parseFloat(powerRes!.power),
+        voltage: parseFloat(voltageRes!.voltage),
+        amperage: parseFloat(currentRes!.current),
+        today: parseFloat(todayRes!.consumption),
+        yesterday: parseFloat(yesterdayRes!.consumption),
+
         total: total,
       };
     } catch (error) {
@@ -125,45 +192,43 @@ export const devicesService = {
   },
 
   /**
-   * GET /<plug_name>/today
+   * GET /api/v1/energy/<plug_name>/today
    * Get today's energy consumption
    */
   async getTodayConsumption(
     plugName: string
   ): Promise<TodayConsumptionResponse> {
-    const normalizedName = normalizePlugName(plugName);
     const response = await api.get<TodayConsumptionResponse>(
-      `/${normalizedName}/today`
+      `/api/v1/energy/${plugName}/today`
     );
     return response.data;
   },
 
   /**
-   * GET /<plug_name>/yesterday
+   * GET /api/v1/energy/<plug_name>/yesterday
    * Get yesterday's energy consumption
    */
   async getYesterdayConsumption(
     plugName: string
   ): Promise<YesterdayConsumptionResponse> {
-    const normalizedName = normalizePlugName(plugName);
     const response = await api.get<YesterdayConsumptionResponse>(
-      `/${normalizedName}/yesterday`
+      `/api/v1/energy/${plugName}/yesterday`
     );
     return response.data;
   },
 
   /**
-   * GET /<plug_name>/history?from=YYYY-MM-DD&to=YYYY-MM-DD
+   * GET /api/v1/energy/<plug_name>/history?from=dd-mm-yyyy HH:MM:SS&to=dd-mm-yyyy HH:MM:SS
    * Get energy consumption over a date range
+   * Backend expects dates in format: "dd-mm-yyyy HH:MM:SS" (e.g., "01-01-2024 00:00:00")
    */
   async getHistory(
     plugName: string,
     from: string,
     to: string
   ): Promise<HistoryConsumptionResponse> {
-    const normalizedName = normalizePlugName(plugName);
     const response = await api.get<HistoryConsumptionResponse>(
-      `/${normalizedName}/history`,
+      `/api/v1/energy/${plugName}/history`,
       {
         params: { from, to },
       }
@@ -172,56 +237,57 @@ export const devicesService = {
   },
 
   /**
-   * GET /<plug_name>/voltage
+   * GET /api/v1/energy/<plug_name>/voltage
    * Get current voltage
    */
   async getVoltage(plugName: string): Promise<VoltageResponse> {
-    const normalizedName = normalizePlugName(plugName);
     const response = await api.get<VoltageResponse>(
-      `/${normalizedName}/voltage`
+      `/api/v1/energy/${plugName}/voltage`
     );
     return response.data;
   },
 
   /**
-   * GET /<plug_name>/power
+   * GET /api/v1/energy/<plug_name>/power
    * Get active power (current)
    */
   async getPower(plugName: string): Promise<PowerResponse> {
-    const normalizedName = normalizePlugName(plugName);
-    const response = await api.get<PowerResponse>(`/${normalizedName}/power`);
-    return response.data;
-  },
-
-  /**
-   * GET /<plug_name>/state
-   * Get current state (ON/OFF)
-   */
-  async getState(plugName: string): Promise<StateResponse> {
-    const normalizedName = normalizePlugName(plugName);
-    const response = await api.get<StateResponse>(`/${normalizedName}/state`);
-    return response.data;
-  },
-
-  /**
-   * GET /<plug_name>/current
-   * Get current flowing through the plug
-   */
-  async getCurrent(plugName: string): Promise<CurrentResponse> {
-    const normalizedName = normalizePlugName(plugName);
-    const response = await api.get<CurrentResponse>(
-      `/${normalizedName}/current`
+    const response = await api.get<PowerResponse>(
+      `/api/v1/energy/${plugName}/power`
     );
     return response.data;
   },
 
   /**
-   * GET /<plug_name>/status
+   * GET /api/v1/devices/<plug_name>/state
+   * Get current state (ON/OFF)
+   */
+  async getState(plugName: string): Promise<StateResponse> {
+    const response = await api.get<StateResponse>(
+      `/api/v1/devices/${plugName}/state`
+    );
+    return response.data;
+  },
+
+  /**
+   * GET /api/v1/energy/<plug_name>/current
+   * Get current flowing through the plug
+   */
+  async getCurrent(plugName: string): Promise<CurrentResponse> {
+    const response = await api.get<CurrentResponse>(
+      `/api/v1/energy/${plugName}/current`
+    );
+    return response.data;
+  },
+
+  /**
+   * GET /api/v1/energy/<plug_name>/status
    * Get full status of the plug
    */
   async getStatus(plugName: string): Promise<StatusResponse> {
-    const normalizedName = normalizePlugName(plugName);
-    const response = await api.get<StatusResponse>(`/${normalizedName}/status`);
+    const response = await api.get<StatusResponse>(
+      `/api/v1/energy/${plugName}/status`
+    );
     return response.data;
   },
 };

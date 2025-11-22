@@ -40,13 +40,15 @@ services:
       - /app/.expo
     environment:
       - NODE_ENV=development
-      - REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP}
+      - REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP:-localhost}
       - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
-      - EXPO_PUBLIC_API_BASE_URL=${EXPO_PUBLIC_API_BASE_URL}
+      - EXPO_PUBLIC_API_BASE_URL=http://${HOST_IP:-localhost}:8080
     env_file:
       - ./SmartPlugMobileApp/.env
     stdin_open: true
     tty: true
+    networks:
+      - app-plug-network
 
 networks:
   app-plug-network:

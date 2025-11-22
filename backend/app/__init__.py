@@ -1,9 +1,23 @@
 from flask import Flask
+from flask_cors import CORS
 import os
 from flasgger import Swagger
 
 def create_app():
     app = Flask(__name__)
+
+    # Configure CORS to allow requests from frontend origins
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": "*",
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["*"],
+            }
+        },
+        supports_credentials=True,
+    )
 
     app.config['SWAGGER'] = {
         'title': 'Energy API',

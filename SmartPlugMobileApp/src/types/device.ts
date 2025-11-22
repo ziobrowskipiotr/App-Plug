@@ -1,8 +1,12 @@
 export interface Device {
   id: number;
   name: string;
-  ip: string;
-  status: "on" | "off";
+  ipv4: string;
+  mac: string;
+}
+
+export interface DeviceWithState extends Device {
+  state: string;
 }
 
 export interface DeviceStats {
@@ -20,6 +24,9 @@ export interface DeviceFormData {
 }
 
 // API Response Types
+
+export type GetDevicesResponse = DeviceWithState[];
+
 export interface TodayConsumptionResponse {
   plug_name: string;
   consumption: string;
@@ -49,6 +56,7 @@ export interface PowerResponse {
 }
 
 export interface StateResponse {
+  plug_name?: string;
   state: string;
 }
 
