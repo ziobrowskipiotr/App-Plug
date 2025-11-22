@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { storage } from "@/src/utils/storage";
+import { ToastProvider } from "@/src/contexts/ToastContext";
 import "../global.css";
 import { StatusBar } from "expo-status-bar";
 
@@ -54,8 +55,10 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Slot />
-      <StatusBar style="light" />
+      <ToastProvider>
+        <Slot />
+        <StatusBar style="light" />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
