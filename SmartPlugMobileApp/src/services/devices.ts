@@ -89,6 +89,54 @@ export const devicesService = {
   },
 
   /**
+   * PUT /api/v1/devices/<current_name>/rename
+   * Rename a device
+   */
+  async renameDevice(id: number, newName: string): Promise<DeviceWithState> {
+    try {
+      // First get the device to find its current name
+      const device = await this.getDevice(id);
+      const currentName = device.name;
+
+      // Call the rename endpoint
+      const response = await api.put<{
+        status: string;
+        old_name: string;
+        new_name: string;
+      }>(`/api/v1/devices/${currentName}/rename`, {
+        new_name: newName,
+      });
+
+      // Return updated device with new name
+      return {
+        ...device,
+        name: response.data.new_name,
+      };
+    } catch (error: any) {
+      console.error("Error renaming device:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * DELETE /api/v1/devices/<plug_name>/remove
+   * Remove a device
+   */
+  async deleteDevice(id: number): Promise<void> {
+    try {
+      // First get the device to find its name
+      const device = await this.getDevice(id);
+      const plugName = device.name;
+
+      // Call the delete endpoint
+      await api.delete(`/api/v1/devices/${plugName}/remove`);
+    } catch (error: any) {
+      console.error("Error deleting device:", error);
+      throw error;
+    }
+  },
+
+  /**
    * POST /api/v1/devices/<plug_name>/toggle
    * Toggle device state (ON/OFF)
    */

@@ -134,6 +134,111 @@ export const useToggleDevice = () => {
 };
 
 /**
+ * Hook to rename device with Toast notifications
+ */
+export const useRenameDevice = () => {
+  const queryClient = useQueryClient();
+  const { showToast, dismissToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, newName }: { id: number; newName: string }) => {
+      // Show pending toast
+      const pendingId = showToast("pending", "Renaming device...", 0);
+
+      try {
+        const result = await devicesService.renameDevice(id, newName);
+        dismissToast(pendingId);
+        return result;
+      } catch (error) {
+        dismissToast(pendingId);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      // Show success toast
+      showToast("success", "Device renamed successfully");
+
+      // Update the device in cache
+      queryClient.setQueryData(deviceKeys.detail(variables.id), data);
+      // Invalidate and update devices list
+      queryClient.setQueryData(
+        deviceKeys.lists(),
+        (oldData: DeviceWithState[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((device) =>
+            device.id === variables.id ? { ...device, ...data } : device
+          );
+        }
+      );
+      // Invalidate related queries
+      queryClient.invalidateQueries({
+        queryKey: deviceKeys.detail(variables.id),
+      });
+    },
+    onError: (error: any) => {
+      // Show error toast with error message
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to rename device";
+      showToast("error", errorMessage);
+      console.error("Error renaming device:", error);
+    },
+  });
+};
+
+/**
+ * Hook to delete device with Toast notifications
+ */
+export const useDeleteDevice = () => {
+  const queryClient = useQueryClient();
+  const { showToast, dismissToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      // Show pending toast
+      const pendingId = showToast("pending", "Deleting device...", 0);
+
+      try {
+        await devicesService.deleteDevice(id);
+        dismissToast(pendingId);
+        return id;
+      } catch (error) {
+        dismissToast(pendingId);
+        throw error;
+      }
+    },
+    onSuccess: (id) => {
+      // Show success toast
+      showToast("success", "Device deleted successfully");
+
+      // Remove device from cache
+      queryClient.setQueryData(
+        deviceKeys.lists(),
+        (oldData: DeviceWithState[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.filter((device) => device.id !== id);
+        }
+      );
+      // Invalidate related queries
+      queryClient.removeQueries({ queryKey: deviceKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: deviceKeys.lists() });
+    },
+    onError: (error: any) => {
+      // Show error toast with error message
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to delete device";
+      showToast("error", errorMessage);
+      console.error("Error deleting device:", error);
+    },
+  });
+};
+
+/**
  * Hook to fetch today's consumption
  */
 export const useTodayConsumption = (plugName: string, enabled = true) => {
