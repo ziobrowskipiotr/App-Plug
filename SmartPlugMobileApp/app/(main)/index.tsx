@@ -80,7 +80,6 @@ export default function DevicesScreen() {
       setNewDeviceName("");
     } catch (error) {
       // Error is handled by the hook's toast notification
-      console.error("Error renaming device:", error);
     }
   };
 

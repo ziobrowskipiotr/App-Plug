@@ -113,7 +113,6 @@ export const devicesService = {
         name: response.data.new_name,
       };
     } catch (error: any) {
-      console.error("Error renaming device:", error);
       throw error;
     }
   },

@@ -183,7 +183,6 @@ export const useRenameDevice = () => {
         error?.message ||
         "Failed to rename device";
       showToast("error", errorMessage);
-      console.error("Error renaming device:", error);
     },
   });
 };
