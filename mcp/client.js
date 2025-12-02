@@ -3,24 +3,14 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import dotenv from "dotenv";
 import express from "express";
-const serverParams = new StreamableHTTPClientTransport(new URL("http://localhost:3000/mcp"));
 
 dotenv.config();
-
-const client = new Client(
-  {
-    name: "mcp_client",
-    version: "1.0.0"
-  }
-);
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY
 });
 
 let conversationHistory = [];
-
-await client.connect(serverParams);
 
 const app = express();
 
@@ -31,10 +21,19 @@ app.post('/chat',async(req,res)=>{
             message: "No text passed"
         });
     }
+    const serverParams = new StreamableHTTPClientTransport(new URL("http://localhost:3000/mcp"));
+    const client = new Client(
+    {
+        name: "mcp_client",
+        version: "1.0.0"
+    }
+    );
+
     const userMessage = { role: "user", parts: [{ text: req.body.text }] };
     conversationHistory.push(userMessage);
 
     try {
+        await client.connect(serverParams);
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: conversationHistory,
@@ -42,6 +41,7 @@ app.post('/chat',async(req,res)=>{
                 tools: [mcpToTool(client)],
             }
         });
+        
 
         if (response.candidates && response.candidates[0] && response.candidates[0].content) {
             conversationHistory.push(response.candidates[0].content);
