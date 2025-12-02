@@ -4,3 +4,6 @@ upload_mcp:
 
 upload_mcp_server:
 	scp -r ./mcp/server.js  piotr@100.96.46.43:/home/piotr/mcp
+
+ssh_raspberry:
+	ssh piotr@100.96.46.43 
