@@ -56,8 +56,8 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <Slot />
-        <StatusBar style="light" />
+      <Slot />
+      <StatusBar style="light" />
       </ToastProvider>
     </QueryClientProvider>
   );
