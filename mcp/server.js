@@ -5,6 +5,7 @@ import express from 'express';
 import util from 'node:util';
 import child_process from 'node:child_process';
 
+const PATH_SPCDEVICES = `spc devices`;
 const PATH_SPCON = `spc on`;
 const PATH_SPCOFF = `spc off`;
 const PATH_SPCSTATE = `spc state`;
@@ -14,12 +15,20 @@ const PATH_SPCENERGY_TODAY = `spc energy-today`;
 const PATH_SPCENERGY_YESTERDAY = `spc energy-yesterday`;
 const PATH_SPCENERGY = `spc energy`;
 
-const tools = [{
+const tools = [
+{
+    name: "spc-devices",
+    title: "SPC Devices",
+    description: "List Smart Plug devices",
+    path: PATH_SPCDEVICES
+},
+{
     name: "spc-on",
     title: "SPC On",
     description: "Enable Smart Plug",
     path: PATH_SPCON
-}, {
+},
+{
     name: "spc-off",
     title: "SPC Off",
     description: "Disable Smart Plug",
@@ -64,7 +73,31 @@ const server = new McpServer({
 });
 
 for (const tool of tools) {
-    server.registerTool(tool.name, {
+    if(tool.name == "spc-devices"){
+        server.registerTool(tool.name, {
+            title: tool.title,
+            description: tool.description,
+            outputSchema: { message: z.string() }
+        },async()=>{
+            try {
+                const { stdout } = await exec(tool.path);
+                // console.log(stdout,stderr);
+                return {
+                    content: [{ type: 'text', text: String(stdout) }],
+                    structuredContent: {message: String(stdout)}
+                }
+            } catch (err) {
+                console.log(err);
+                const msg = err && (err.stdout || err.message) ? (err.stdout || err.message) : String(err);
+                return {
+                    content: [{ type: 'text', text: String(msg) }],
+                   structuredContent: { message: String(msg) }
+               };
+           }
+
+        })
+    } else {
+            server.registerTool(tool.name, {
         title: tool.title,
         description: tool.description,
         inputSchema: {plugName: z.string()},
@@ -88,6 +121,8 @@ for (const tool of tools) {
            }
         }
     )
+    }
+
 }
 
 const app = express();

@@ -18,6 +18,8 @@ const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY
 });
 
+let conversationHistory = [];
+
 await client.connect(serverParams);
 
 const app = express();
@@ -29,16 +31,37 @@ app.post('/chat',async(req,res)=>{
             message: "No text passed"
         });
     }
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: req.body.text,
-        config: {
-            tools: [mcpToTool(client)],
+    const userMessage = { role: "user", parts: [{ text: req.body.text }] };
+    conversationHistory.push(userMessage);
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: conversationHistory,
+            config: {
+                tools: [mcpToTool(client)],
+            }
+        });
+
+        if (response.candidates && response.candidates[0] && response.candidates[0].content) {
+            conversationHistory.push(response.candidates[0].content);
         }
-    }); 
-    
-    return res.status(200).json({
-        message: response.text
+
+        return res.status(200).json({
+            message: response.text
+        });
+
+    } catch (error) {
+        console.error("Gemini Error:", error);
+        conversationHistory.pop();
+        return res.status(500).json({ message: "Internal Error", error: error.toString() });
+    }
+});
+
+app.post('/reset', (req,res)=>{
+    conversationHistory = [];
+    res.status(200).json({
+        message: 'Conversation history cleared.'
     });
 });
 
