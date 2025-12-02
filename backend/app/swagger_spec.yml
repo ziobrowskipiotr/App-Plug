@@ -1,0 +1,439 @@
+swagger: "2.0"
+info:
+  title: Energy API
+  version: 1.0.0
+  description: API documentation for energy monitoring and management endpoints.
+
+paths:
+  /api/v1/energy/{plug_name}/today:
+    get:
+      tags:
+        - Energy
+      summary: Get today's energy consumption
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Today's energy consumption
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plug_name:
+                    type: string
+                  consumption:
+                    type: string
+                  unit:
+                    type: string
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/yesterday:
+    get:
+      tags:
+        - Energy
+      summary: Get yesterday's energy consumption
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Yesterday's energy consumption
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/history:
+    get:
+      tags:
+        - Energy
+      summary: Get energy consumption in a time range
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: from
+          required: true
+          schema:
+            type: string
+          description: Start datetime in DD-MM-YYYY HH:MM:SS format
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+          description: End datetime in DD-MM-YYYY HH:MM:SS format
+      responses:
+        '200':
+          description: Energy usage for the given time period
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad date parameters
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/voltage:
+    get:
+      tags:
+        - Energy
+      summary: Get current voltage value
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current voltage
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/power:
+    get:
+      tags:
+        - Energy
+      summary: Get current power usage
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current power
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/current:
+    get:
+      tags:
+        - Energy
+      summary: Get current (amperage)
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current amperage
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/energy/{plug_name}/status:
+    get:
+      tags:
+        - Energy
+      summary: Get current plug status
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: JSON plug status
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Server error
+
+  /api/v1/devices/{plug_name}/turn-on:
+    post:
+      tags:
+        - Devices
+      summary: Turn a plug on
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Device turned on successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  action:
+                    type: string
+                  result:
+                    type: string
+        '500':
+          description: Server error
+
+  /api/v1/devices/{plug_name}/turn-off:
+    post:
+      tags:
+        - Devices
+      summary: Turn a plug off
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Device turned off successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  action:
+                    type: string
+                  result:
+                    type: string
+        '500':
+          description: Server error
+
+  /api/v1/devices/{plug_name}/toggle:
+    post:
+      tags:
+        - Devices
+      summary: Toggle the plug state (ON → OFF, OFF → ON)
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Device toggled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  action:
+                    type: string
+                  plug_name:
+                    type: string
+                  result:
+                    type: string
+                  new_state:
+                    type: string
+        '500':
+          description: Server error
+  /api/v1/devices/{plug_name}/state:
+    get:
+      tags:
+        - Devices
+      summary: Get current state of the plug
+      parameters:
+        - in: path
+          name: plug_name
+          required: true
+          schema:
+            type: string
+          description: Name of the plug
+      responses:
+        '200':
+          description: Current state of the plug
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: success or error
+                  plug_name:
+                    type: string
+                  state:
+                    type: string
+                    description: Current state (ON or OFF)
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  plug_name:
+                    type: string
+                  message:
+                    type: string
+  /api/v1/devices/{current_name}/rename:
+      put:
+        tags:
+          - Devices
+        summary: Rename an existing device
+        description: Changes the name of a device. Checks if the new name already exists to avoid duplicates.
+        parameters:
+          - in: path
+            name: current_name
+            required: true
+            schema:
+              type: string
+            description: The current name of the device
+        requestBody:
+          required: true
+          description: JSON object containing the new name
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - new_name
+                properties:
+                  new_name:
+                    type: string
+                    description: The target name for the device
+                    example: "kitchen_lamp"
+        responses:
+          '200':
+            description: Device renamed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      example: "success"
+                    old_name:
+                      type: string
+                    new_name:
+                      type: string
+          '400':
+            description: Invalid input (Invalid JSON or missing 'new_name')
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+          '409':
+            description: Conflict - The provided 'new_name' is already taken by another device
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+          '502':
+            description: Bad Gateway - Failed to parse device list from the SSH backend
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+                    raw_output:
+                      type: string
+          '500':
+            description: Internal Server Error
+
+  /api/v1/devices/{plug_name}/remove:
+      delete:
+        tags:
+          - Devices
+        summary: Remove a device
+        description: Removes a device from the system. Verifies if the device exists before attempting removal.
+        parameters:
+          - in: path
+            name: plug_name
+            required: true
+            schema:
+              type: string
+            description: The name of the device to remove
+        responses:
+          '200':
+            description: Device removed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      example: "success"
+                    message:
+                      type: string
+                      example: "Device 'lamp' has been removed"
+                    result:
+                      type: string
+          '404':
+            description: Device not found - Cannot remove a non-existent device
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+                      example: "Device 'lamp' not found. Cannot remove non-existent device."
+          '502':
+            description: Bad Gateway - Failed to parse device list from the SSH backend
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+          '500':
+            description: Internal Server Error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string

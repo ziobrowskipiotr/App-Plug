@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: app-plug-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    environment:
+      - FLASK_APP=wsgi.py
+      - FLASK_ENV=${FLASK_ENV}
+      - SECRET_KEY=${SECRET_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-plug-network
+
+  mobile-app:
+    build:
+      context: ./SmartPlugMobileApp
+      dockerfile: Dockerfile
+    container_name: app-plug-mobile-app
+    restart: unless-stopped
+    ports:
+      - "8081:8081" # Metro bundler
+      - "19000:19000" # exp://
+      - "19002:19002" # DevTools (web)
+    volumes:
+      - ./SmartPlugMobileApp:/app
+      - /app/node_modules
+      - /app/.expo
+    environment:
+      - NODE_ENV=development
+      - REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP:-localhost}
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - EXPO_PUBLIC_API_BASE_URL=http://${HOST_IP:-localhost}:8080
+    env_file:
+      - ./SmartPlugMobileApp/.env
+    stdin_open: true
+    tty: true
+    networks:
+      - app-plug-network
+
+networks:
+  app-plug-network:
+    driver: bridge
+    name: app-plug-network
