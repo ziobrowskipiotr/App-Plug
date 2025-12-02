@@ -129,12 +129,13 @@ export const useSpeechRecognition = (
 
   const cancel = useCallback(async () => {
     try {
-      await ExpoSpeechRecognitionModule.cancel();
+      await ExpoSpeechRecognitionModule.stop();
+    } catch (err: any) {
+      console.error("Failed to cancel listening:", err);
+    } finally {
       setIsListening(false);
       setTranscript("");
       setIsFinal(false);
-    } catch (err: any) {
-      console.error("Failed to cancel listening:", err);
     }
   }, []);
 

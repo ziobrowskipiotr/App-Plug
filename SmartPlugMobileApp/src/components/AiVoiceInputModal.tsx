@@ -178,6 +178,9 @@ export const AiVoiceInputModal: React.FC<AiVoiceInputModalProps> = ({
   };
 
   const handleSend = async () => {
+    // Prevent sending when AI is already processing a message
+    if (isMcpLoading) return;
+
     const messageText = inputText.trim();
     if (!messageText) return;
 
@@ -281,11 +284,12 @@ export const AiVoiceInputModal: React.FC<AiVoiceInputModalProps> = ({
                     value={inputText}
                     onChangeText={setInputText}
                     multiline
-                    editable={true}
+                    editable={!isMcpLoading}
                     style={{
                       color: "#FFFFFF",
                       fontSize: 16,
                       padding: 0,
+                      opacity: isMcpLoading ? 0.6 : 1,
                     }}
                   />
                   {isRecording && (
