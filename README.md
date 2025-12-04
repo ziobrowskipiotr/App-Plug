@@ -238,6 +238,35 @@ This encoding/decoding mechanism is lightweight, fast, and ensures that each dev
     *   Waits for the smartplug to reconnect to the home network.
     *   Registers the device to the user's account.
 
+### Technical Implementation: Automated Wi-Fi Provisioning
+
+To streamline the onboarding process (especially for non-technical users), we plan to implement an in-app Wi-Fi connection handler using libraries like **`react-native-wifi-reborn`**. This eliminates the need to manually switch networks in system settings.
+
+#### Implementation Strategy
+
+**1. iOS (NetworkExtension Framework)**
+*   **Mechanism:** Uses `NEHotspotConfigurationManager`.
+*   **UX:** The user triggers the action in-app and must confirm a standard system dialog (*"App-Plug wants to join Wi-Fi Network NOUS-A1T..."*).
+*   **Requirements:**
+    *   Add `com.apple.developer.networking.HotspotConfiguration` entitlement in Xcode/Expo Config.
+
+**2. Android (WifiNetworkSpecifier)**
+*   **Mechanism:** Uses `WifiNetworkSpecifier` (Android 10+) to request a specific peer-to-peer connection with the IoT device without changing the global system network.
+*   **UX:** A system panel requests user confirmation to connect to the specific device.
+*   **Permissions Required:**
+    *   `ACCESS_FINE_LOCATION` (Required for scanning on older Android versions).
+    *   `NEARBY_WIFI_DEVICES` (Crucial for Android 13+ / API 33 compatibility).
+    *   `CHANGE_WIFI_STATE`.
+
+#### Development Roadmap
+- [ ] Install and configure `react-native-wifi-reborn`.
+- [ ] Update `app.json` (Expo) with required Android permissions and iOS entitlements.
+- [ ] Implement the "Connect & Configure" flow:
+    1.  App requests connection to `NOUS-A1T-*`.
+    2.  User approves system prompt (One-Click action).
+    3.  App sends HTTP POST with home Wi-Fi credentials to `192.168.4.1`.
+    4.  App disconnects from the plug, automatically reverting to the home network.
+
 ### Key Benefits of This Approach
 
 *   **Effortless Experience:** The user no longer needs to manually search for and connect to the device's temporary network.
