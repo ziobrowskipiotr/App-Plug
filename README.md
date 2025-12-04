@@ -259,9 +259,9 @@ To streamline the onboarding process (especially for non-technical users), we pl
     *   `CHANGE_WIFI_STATE`.
 
 #### Development Roadmap
-- [ ] Install and configure `react-native-wifi-reborn`.
-- [ ] Update `app.json` (Expo) with required Android permissions and iOS entitlements.
-- [ ] Implement the "Connect & Configure" flow:
+- Install and configure `react-native-wifi-reborn`.
+- Update `app.json` (Expo) with required Android permissions and iOS entitlements.
+- Implement the "Connect & Configure" flow:
     1.  App requests connection to `NOUS-A1T-*`.
     2.  User approves system prompt (One-Click action).
     3.  App sends HTTP POST with home Wi-Fi credentials to `192.168.4.1`.
