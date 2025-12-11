@@ -511,12 +511,12 @@ The mobile app runs in a Docker container for consistent development:
 <p align="center">
   <img src="https://github.com/user-attachments/assets/2b06992b-cc4d-448d-a85c-f6495cabf520" width="250" />
   <img src="https://github.com/user-attachments/assets/9579a7ab-420d-4531-9923-acb5f7bc44dd" width="250" />
-  <img src="https://github.com/user-attachments/assets/37f17a78-241c-4908-b31b-361fce9250ca" width="250" />
+  <img src="https://github.com/user-attachments/assets/984451d8-19d6-4b17-8011-c1154eb3714d" width="250" />
 </p>
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/0184de93-381c-4de7-a5ad-075449f00bfb" width="250" />
-  <img src="https://github.com/user-attachments/assets/984451d8-19d6-4b17-8011-c1154eb3714d" width="250" />
+  <img src="https://github.com/user-attachments/assets/37f17a78-241c-4908-b31b-361fce9250ca" width="250" />
 </p>
 
 
